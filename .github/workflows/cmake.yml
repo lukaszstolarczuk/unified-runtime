@@ -9,6 +9,7 @@ jobs:
   ubuntu-build:
     name: Build - Ubuntu
     strategy:
+      fail-fast: false
       matrix:
         config:
           - {os: 'ubuntu-20.04', compiler: {c: gcc, cxx: g++}}
@@ -40,7 +41,7 @@ jobs:
         -DUR_FORMAT_CPP_STYLE=ON
 
     - name: Generate source from spec, check for uncommitted diff
-      if: ${{matrix.config.os}} == "ubuntu-22.04"
+      if: ${{matrix.config.os}} == ubuntu-22.04
       run: cmake --build ${{github.workspace}}/build --target check-generated
 
     - name: Build
@@ -53,6 +54,7 @@ jobs:
   windows-build:
     name: Build - Windows
     strategy:
+      fail-fast: false
       matrix:
         config:
           - {os: 'windows-2019'}
@@ -79,8 +81,12 @@ jobs:
         -DUR_BUILD_TESTS=ON
         -DUR_FORMAT_CPP_STYLE=ON
 
+    - name: print
+      if: matrix.config.os == 'windows-2022'
+      run: echo "I'm in"
+
     - name: Generate source from spec, check for uncommitted diff
-      if: ${{matrix.config.os}} == "windows-2022"
+      if: matrix.config.os == 'windows-2022'
       run: cmake --build ${{github.workspace}}/build --target check-generated --config ${{env.BUILD_TYPE}}
 
     - name: Build all
