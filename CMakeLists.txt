@@ -23,6 +23,8 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
+message(WARNING "sufixes: ${CMAKE_EXECUTABLE_SUFFIX}")
+
 # Build Options
 option(UR_BUILD_TESTS "Build unit tests." ON)
 option(UR_BUILD_TOOLS "build ur tools" ON)
