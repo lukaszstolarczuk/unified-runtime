@@ -20,7 +20,6 @@ jobs:
       - name: Install pip packages
         run: pip install -r third_party/requirements.txt
 
-      # Scan is run only for the 'tools' folder.
       - name: Run Bandit
         run: |
-          bandit -r tools
+          bandit -r .
