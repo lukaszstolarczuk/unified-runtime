@@ -8,11 +8,11 @@
 #
 
 # Pull base image
-FROM registry.hub.docker.com/library/ubuntu:22.04
+FROM registry.hub.docker.com/library/ubuntu:20.04
 
 # Set environment variables
 ENV OS ubuntu
-ENV OS_VER 22.04
+ENV OS_VER 20.04
 ENV NOTTY 1
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -37,6 +37,7 @@ ARG UR_DEPS="\
 # Miscellaneous for our builds/CI (optional)
 ARG MISC_DEPS="\
 	clang \
+	g++-7 \
 	sudo \
 	wget \
 	whois"

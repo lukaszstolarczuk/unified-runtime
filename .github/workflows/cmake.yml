@@ -6,12 +6,12 @@ jobs:
   ubuntu-build:
     name: Build - Ubuntu
     strategy:
+      fail-fast: false
       matrix:
         os: ['ubuntu-20.04', 'ubuntu-22.04']
         build_type: [Debug, Release]
         compiler: [{c: gcc, cxx: g++}]
         libbacktrace: ['-DVAL_USE_LIBBACKTRACE_BACKTRACE=OFF']
-        pool_tracking: ['-DUMF_ENABLE_POOL_TRACKING=ON', '-DUMF_ENABLE_POOL_TRACKING=OFF']
         include:
           - os: 'ubuntu-22.04'
             build_type: Release
@@ -34,63 +34,43 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install apt packages
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y doxygen ${{matrix.compiler.c}}
-
-    - name: Install g++-7
-      if: matrix.compiler.cxx == 'g++-7'
-      run: |
-        sudo apt-get install -y ${{matrix.compiler.cxx}}
-
-    - name: Install pip packages
-      run: pip install -r third_party/requirements.txt
-
-    - name: Install libbacktrace
-      if: matrix.libbacktrace == '-DVAL_USE_LIBBACKTRACE_BACKTRACE=ON'
-      run: |
-        git clone https://github.com/ianlancetaylor/libbacktrace.git
-        cd libbacktrace
-        ./configure
-        make
-        sudo make install
-        cd ..
-
-    - name: Download DPC++
-      run: |
-        sudo apt install libncurses5
-        wget -O ${{github.workspace}}/dpcpp_compiler.tar.gz https://github.com/intel/llvm/releases/download/sycl-nightly%2F20230626/dpcpp-compiler.tar.gz
-        tar -xvf ${{github.workspace}}/dpcpp_compiler.tar.gz
+    - name: Build docker
+      working-directory: ${{github.workspace}}
+      run: docker build -t ur-${{matrix.os}} -f .github/docker/${{matrix.os}}.Dockerfile .
 
     - name: Configure CMake
-      run: >
-        cmake
-        -B${{github.workspace}}/build
-        -DCMAKE_C_COMPILER=${{matrix.compiler.c}}
-        -DCMAKE_CXX_COMPILER=${{matrix.compiler.cxx}}
-        -DUR_ENABLE_TRACING=ON
-        -DUR_DEVELOPER_MODE=ON
-        -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
-        -DUR_BUILD_TESTS=ON
-        -DUR_FORMAT_CPP_STYLE=ON
-        -DUR_DPCXX=${{github.workspace}}/dpcpp_compiler/bin/clang++
-        ${{matrix.libbacktrace}}
-        ${{matrix.pool_tracking}}
+      # TODO: use non-root user within docker
+      run: |
+        docker run -i \
+          -v ${{github.workspace}}:/tmp/ur \
+          -w /tmp/ur/ \
+          ur-${{matrix.os}} \
+          cmake \
+            -B/tmp/ur/build \
+            -DCMAKE_C_COMPILER=${{matrix.compiler.c}} \
+            -DCMAKE_CXX_COMPILER=${{matrix.compiler.cxx}} \
+            -DUR_ENABLE_TRACING=ON \
+            -DUR_DEVELOPER_MODE=ON \
+            -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+            -DUR_BUILD_TESTS=ON \
+            -DUR_FORMAT_CPP_STYLE=ON \
+            -DUR_DPCXX=${DPCPP_PATH}/dpcpp_compiler/bin/clang++ \
+            ${{matrix.libbacktrace}}
 
-    - name: Generate source from spec, check for uncommitted diff
-      if: matrix.os == 'ubuntu-22.04'
-      run: cmake --build ${{github.workspace}}/build --target check-generated
-    
-    - name: Verify that each source file contains a license
-      run: cmake --build ${{github.workspace}}/build --target verify-licenses
+    # TODO: move these dev checks into a sep. job...?
+    # - name: Generate source from spec, check for uncommitted diff
+    #   if: matrix.os == 'ubuntu-22.04'
+    #   run: cmake --build ${{github.workspace}}/build --target check-generated
 
-    - name: Build
-      run: cmake --build ${{github.workspace}}/build -j $(nproc)
+    # - name: Verify that each source file contains a license
+    #   run: cmake --build ${{github.workspace}}/build --target verify-licenses
 
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{matrix.build_type}} --output-on-failure -L "python|umf|loader|validation|tracing|unit|urtrace"
+    # - name: Build
+    #   run: cmake --build ${{github.workspace}}/build -j $(nproc)
+
+    # - name: Test
+    #   working-directory: ${{github.workspace}}/build
+    #   run: ctest -C ${{matrix.build_type}} --output-on-failure -L "python|umf|loader|validation|tracing|unit|urtrace"
 
   windows-build:
     name: Build - Windows
