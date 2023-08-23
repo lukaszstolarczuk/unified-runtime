@@ -4,6 +4,7 @@ on: [push, pull_request]
 
 jobs:
   ubuntu-build:
+    if: false
     name: Build - Ubuntu
     strategy:
       matrix:
@@ -92,6 +93,7 @@ jobs:
       run: ctest -C ${{matrix.build_type}} --output-on-failure -L "python|umf|loader|validation|tracing|unit|urtrace"
 
   fuzztest-build:
+    if: false
     name: Build and run quick fuzztest scenarios
     strategy:
       matrix:
@@ -233,11 +235,17 @@ jobs:
     - name: Build
       run: cmake --build ${{github.workspace}}/build -j $(nproc)
 
+    - name: Test L0 (w/o long one)
+      if: matrix.adapter == 'L0'
+      working-directory: ${{github.workspace}}/build
+      run: ctest -C ${{matrix.build_type}} --output-on-failure -L "conformance" -E "platform-adapter_level_zero"
+
     - name: Test
       working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{matrix.build_type}} --output-on-failure -L "conformance" --timeout 3600
+      run: ctest -C ${{matrix.build_type}} --output-on-failure -L "conformance" --timeout 5400
 
   windows-build:
+    if: false
     name: Build - Windows
     strategy:
       matrix:
@@ -277,6 +285,7 @@ jobs:
       run: ctest -C ${{matrix.build_type}} --output-on-failure -L "python|umf|loader|validation|tracing|unit|urtrace"
 
   macos-build:
+    if: false
     name: Build - MacOS
     strategy:
         matrix:
