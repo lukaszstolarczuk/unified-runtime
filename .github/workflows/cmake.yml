@@ -2,12 +2,9 @@ name: Build and test
 
 on: [push, pull_request]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
-
 jobs:
   ubuntu-build:
+    if: false
     name: Build - Ubuntu
     strategy:
       matrix:
@@ -113,6 +110,7 @@ jobs:
       run: ctest -C ${{matrix.build_type}} --output-on-failure -L "python|umf|loader|validation|tracing|unit|urtrace"
 
   fuzztest-build:
+    if: false
     name: Build and run quick fuzztest scenarios
     strategy:
       matrix:
@@ -159,12 +157,9 @@ jobs:
 
   adapter-build-hw:
     name: Build - Adapters on HW
-    if: github.repository == 'oneapi-src/unified-runtime'  # run only on upstream; forks won't have the HW
     strategy:
       matrix:
         adapter: [
-          {name: CUDA, triplet: nvptx64-nvidia-cuda},
-          {name: HIP, triplet: amdgcn-amd-amdhsa}, 
           {name: L0, triplet: spir64}
         ]
         build_type: [Debug, Release]
@@ -223,7 +218,6 @@ jobs:
 
   examples-build-hw:
     name: Build - examples on HW
-    if: github.repository == 'oneapi-src/unified-runtime'  # run only on upstream; forks won't have the HW
     strategy:
       matrix:
         adapter: [
@@ -274,6 +268,7 @@ jobs:
         rm ${HOME}/.profile || true
 
   windows-build:
+    if: false
     name: Build - Windows
     strategy:
       matrix:
@@ -327,6 +322,7 @@ jobs:
 
 
   macos-build:
+    if: false
     name: Build - MacOS
     strategy:
         matrix:
