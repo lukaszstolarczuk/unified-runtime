@@ -4,18 +4,17 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #
-# Dockerfile - a 'recipe' for Docker to build an image of ubuntu-based
+# Dockerfile - a 'recipe' for Docker to build an image of opensuse-leap-based
 #              environment for building the Unified Runtime project.
 #
 
 # Pull base image
-FROM registry.hub.docker.com/library/ubuntu:22.04
+FROM registry.hub.docker.com/opensuse/leap:15
 
 # Set environment variables
-ENV OS ubuntu
-ENV OS_VER 22.04
+ENV OS opensuse-leap
+ENV OS_VER 15
 ENV NOTTY 1
-ENV DEBIAN_FRONTEND noninteractive
 
 # Additional parameters to build docker without building components.
 # These ARGs can be set in docker building phase and are used
@@ -25,35 +24,40 @@ ARG SKIP_LIBBACKTRACE_BUILD
 
 # Base development packages
 ARG BASE_DEPS="\
-	build-essential \
 	cmake \
-	git"
+	gcc \
+	gcc-c++ \
+	git \
+	glibc-devel \
+	libstdc++-devel \
+	make"
 
 # Unified Runtime's dependencies
 ARG UR_DEPS="\
 	doxygen \
 	python3 \
+	python3-devel \
 	python3-pip"
 
 # Miscellaneous for our builds/CI (optional)
 ARG MISC_DEPS="\
 	clang \
+	gzip \
 	libncurses5 \
 	sudo \
-	wget \
-	whois"
+	tar \
+	wget"
+
+# add openSUSE Leap 15.5 Oss repo
+RUN zypper ar -f https://download.opensuse.org/distribution/leap/15.5/repo/oss/ oss
 
 # Update and install required packages
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
+RUN zypper update -y \
+ && zypper install -y \
 	${BASE_DEPS} \
 	${UR_DEPS} \
 	${MISC_DEPS} \
- && rm -rf /var/lib/apt/lists/* \
- && apt-get clean all
-
-# Prepare a dir (accessible by anyone)
-RUN mkdir --mode 777 /opt/ur/
+ && zypper clean all
 
 # Additional dependencies (installed via pip)
 COPY third_party/requirements.txt /opt/ur/requirements.txt
@@ -66,9 +70,17 @@ RUN /opt/ur/install_dpcpp.sh
 
 # Install libbacktrace
 COPY .github/docker/install_libbacktrace.sh /ur/opt/install_libbacktrace.sh
-RUN /opt/ur/install_libbacktrace.sh
+RUN /ur/opt/install_libbacktrace.sh
 
-# Add a new (non-root) 'user'
+# Add user
 ENV USER user
 ENV USERPASS pass
-RUN useradd -m "${USER}" -g sudo -p "$(mkpasswd ${USERPASS})"
+ENV PFILE ./password
+RUN useradd -m ${USER} \
+ && echo ${USERPASS} > ${PFILE} \
+ && echo ${USERPASS} >> ${PFILE} \
+ && passwd ${USER} < ${PFILE} \
+ && rm -f ${PFILE} \
+ && sed -i 's/# %wheel/%wheel/g' /etc/sudoers \
+ && groupadd wheel \
+ && gpasswd wheel -a ${USER}

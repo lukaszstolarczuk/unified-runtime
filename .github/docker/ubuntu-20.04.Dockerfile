@@ -9,11 +9,11 @@
 #
 
 # Pull base image
-FROM registry.hub.docker.com/library/ubuntu:22.04
+FROM registry.hub.docker.com/library/ubuntu:20.04
 
 # Set environment variables
 ENV OS ubuntu
-ENV OS_VER 22.04
+ENV OS_VER 20.04
 ENV NOTTY 1
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -38,6 +38,7 @@ ARG UR_DEPS="\
 # Miscellaneous for our builds/CI (optional)
 ARG MISC_DEPS="\
 	clang \
+	g++-7 \
 	libncurses5 \
 	sudo \
 	wget \
@@ -58,11 +59,6 @@ RUN mkdir --mode 777 /opt/ur/
 # Additional dependencies (installed via pip)
 COPY third_party/requirements.txt /opt/ur/requirements.txt
 RUN pip3 install --no-cache-dir -r /opt/ur/requirements.txt
-
-# Install DPC++
-COPY .github/docker/install_dpcpp.sh /opt/ur/install_dpcpp.sh
-ENV DPCPP_PATH=/opt/dpcpp
-RUN /opt/ur/install_dpcpp.sh
 
 # Install libbacktrace
 COPY .github/docker/install_libbacktrace.sh /ur/opt/install_libbacktrace.sh

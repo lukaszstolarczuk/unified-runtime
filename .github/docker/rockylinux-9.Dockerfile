@@ -4,18 +4,17 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #
-# Dockerfile - a 'recipe' for Docker to build an image of ubuntu-based
+# Dockerfile - a 'recipe' for Docker to build an image of rockylinux-based
 #              environment for building the Unified Runtime project.
 #
 
 # Pull base image
-FROM registry.hub.docker.com/library/ubuntu:22.04
+FROM registry.hub.docker.com/library/rockylinux:9
 
 # Set environment variables
-ENV OS ubuntu
-ENV OS_VER 22.04
+ENV OS rockylinux
+ENV OS_VER 9
 ENV NOTTY 1
-ENV DEBIAN_FRONTEND noninteractive
 
 # Additional parameters to build docker without building components.
 # These ARGs can be set in docker building phase and are used
@@ -25,9 +24,11 @@ ARG SKIP_LIBBACKTRACE_BUILD
 
 # Base development packages
 ARG BASE_DEPS="\
-	build-essential \
 	cmake \
-	git"
+	git \
+	glibc-devel \
+	libstdc++-devel \
+	make"
 
 # Unified Runtime's dependencies
 ARG UR_DEPS="\
@@ -38,19 +39,18 @@ ARG UR_DEPS="\
 # Miscellaneous for our builds/CI (optional)
 ARG MISC_DEPS="\
 	clang \
-	libncurses5 \
+	ncurses-libs-6.2 \
+	passwd \
 	sudo \
-	wget \
-	whois"
+	wget"
 
 # Update and install required packages
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
+RUN dnf update -y \
+ && dnf --enablerepo devel install -y \
 	${BASE_DEPS} \
 	${UR_DEPS} \
 	${MISC_DEPS} \
- && rm -rf /var/lib/apt/lists/* \
- && apt-get clean all
+ && dnf clean all
 
 # Prepare a dir (accessible by anyone)
 RUN mkdir --mode 777 /opt/ur/
@@ -66,9 +66,17 @@ RUN /opt/ur/install_dpcpp.sh
 
 # Install libbacktrace
 COPY .github/docker/install_libbacktrace.sh /ur/opt/install_libbacktrace.sh
-RUN /opt/ur/install_libbacktrace.sh
+RUN /ur/opt/install_libbacktrace.sh
 
 # Add a new (non-root) 'user'
 ENV USER user
 ENV USERPASS pass
-RUN useradd -m "${USER}" -g sudo -p "$(mkpasswd ${USERPASS})"
+# Change shell to bash with safe pipe usage
+SHELL [ "/bin/bash", "-o", "pipefail", "-c" ]
+RUN useradd -m $USER \
+ && echo "${USERPASS}" | passwd "${USER}" --stdin \
+ && gpasswd wheel -a "${USER}" \
+ && echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+# Change shell back to default
+SHELL ["/bin/sh", "-c"]
