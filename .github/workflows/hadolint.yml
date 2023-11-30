@@ -30,5 +30,6 @@ jobs:
         with:
           recursive: true
           dockerfile:  ".github/docker/*Dockerfile"
-          # ignore pinning apt packages to versions
-          ignore: DL3008
+          verbose: true
+          # ignore pinning apt/dnf/zypper packages to versions
+          ignore: DL3008,DL3037,DL3041
