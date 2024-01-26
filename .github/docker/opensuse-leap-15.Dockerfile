@@ -52,12 +52,16 @@ ARG MISC_DEPS="\
 RUN zypper ar -f https://download.opensuse.org/distribution/leap/15.5/repo/oss/ oss
 
 # Update and install required packages
-RUN zypper update -y \
- && zypper install -y \
-	${BASE_DEPS} \
-	${UR_DEPS} \
-	${MISC_DEPS} \
- && zypper clean all
+# RUN zypper update -y \
+#  && zypper install -y \
+# 	${BASE_DEPS} \
+# 	${UR_DEPS} \
+# 	${MISC_DEPS} \
+#  && zypper clean all
+
+RUN zypper update -y && zypper install -y cmake=3.20.4 gcc=7-3.9.1 gcc-c++=7-3.9.1 git=2.35.3 glibc-devel=2.31 \
+	libstdc++-devel=7-3.9.1 make=4.2.1 doxygen=1.8.14 python3=3.6.15 python3-devel=3.6.15 python3-pip=20.0.2 \
+	clang=15.0.7 gzip=1.10 libncurses5=6.1 sudo=1.9.12p1 tar=1.34 wget=1.20.3 && zypper clean all
 
 # Prepare a dir (accessible by anyone)
 RUN mkdir --mode 777 /opt/ur/
