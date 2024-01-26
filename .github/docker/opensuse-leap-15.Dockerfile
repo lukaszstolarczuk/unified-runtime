@@ -24,29 +24,29 @@ ARG SKIP_LIBBACKTRACE_BUILD
 
 # Base development packages
 ARG BASE_DEPS="\
-	cmake \
-	gcc \
-	gcc-c++ \
-	git \
-	glibc-devel \
-	libstdc++-devel \
-	make"
+	cmake=3.20.4 \
+	gcc=7-3.9.1 \
+	gcc-c++=7-3.9.1 \
+	git=2.35.3 \
+	glibc-devel=2.31 \
+	libstdc++-devel=7-3.9.1 \
+	make=4.2.1"
 
 # Unified Runtime's dependencies
 ARG UR_DEPS="\
-	doxygen \
-	python3 \
-	python3-devel \
-	python3-pip"
+	doxygen=1.8.14 \
+	python3=3.6.15 \
+	python3-devel=3.6.15 \
+	python3-pip=20.0.2"
 
 # Miscellaneous for our builds/CI (optional)
 ARG MISC_DEPS="\
-	clang \
-	gzip \
-	libncurses5 \
-	sudo \
-	tar \
-	wget"
+	clang=15.0.7 \
+	gzip=1.10 \
+	libncurses5=6.1 \
+	sudo=1.9.12p1 \
+	tar=1.34 \
+	wget=1.20.3"
 
 # add openSUSE Leap 15.5 Oss repo
 RUN zypper ar -f https://download.opensuse.org/distribution/leap/15.5/repo/oss/ oss
