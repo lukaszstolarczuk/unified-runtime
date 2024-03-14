@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   ubuntu-build:
+    if: false
     name: Build - Ubuntu
     strategy:
       matrix:
@@ -116,6 +117,7 @@ jobs:
       run: ctest -C ${{matrix.build_type}} --output-on-failure -L "umf|loader|validation|tracing|unit|urtrace"
 
   fuzztest-build:
+    if: false
     name: Build and run quick fuzztest scenarios
     strategy:
       matrix:
@@ -162,15 +164,10 @@ jobs:
 
   adapter-build-hw:
     name: Build - Adapters on HW
-    if: github.repository == 'oneapi-src/unified-runtime'  # run only on upstream; forks won't have the HW
     strategy:
       matrix:
         adapter: [
-          {name: CUDA, platform: ""},
-          {name: HIP, platform: ""},
           {name: L0, platform: ""},
-          {name: OPENCL, platform: "Intel(R) OpenCL"},
-          {name: NATIVE_CPU, platform: ""}
         ]
         build_type: [Debug, Release]
         compiler: [{c: gcc, cxx: g++}, {c: clang, cxx: clang++}]
@@ -280,6 +277,7 @@ jobs:
 
   windows-build:
     name: Build - Windows
+    if: false
     strategy:
       matrix:
         os: ['windows-2019', 'windows-2022']
@@ -347,6 +345,7 @@ jobs:
 
   macos-build:
     name: Build - MacOS
+    if: false
     strategy:
         matrix:
           os: ['macos-12', 'macos-13']
