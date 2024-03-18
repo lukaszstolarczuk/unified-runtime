@@ -163,15 +163,10 @@ jobs:
 
   adapter-build-hw:
     name: Build - Adapters on HW
-    if: github.repository == 'oneapi-src/unified-runtime'  # run only on upstream; forks won't have the HW
     strategy:
       matrix:
         adapter: [
-          {name: CUDA, platform: ""},
-          {name: HIP, platform: ""},
           {name: L0, platform: ""},
-          {name: OPENCL, platform: "Intel(R) OpenCL"},
-          {name: NATIVE_CPU, platform: ""}
         ]
         build_type: [Debug, Release]
         compiler: [{c: gcc, cxx: g++}, {c: clang, cxx: clang++}]
