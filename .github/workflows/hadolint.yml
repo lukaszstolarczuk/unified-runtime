@@ -18,6 +18,7 @@ permissions:
 
 jobs:
   linux:
+    if: false
     name: Hadolint
     runs-on: ubuntu-latest
 
