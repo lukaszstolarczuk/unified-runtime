@@ -9,7 +9,7 @@
 #
 
 # Pull base image ("15")
-FROM registry.hub.docker.com/opensuse/leap@sha256:bd0fcef5afdc37936fd102ade71522d30b68364e724cb84083bc64d036b995b4
+FROM registry.hub.docker.com/opensuse/leap@sha256:1cf79e78bb69f39fb2f78a7c2c7ebc4b64cf8d82eb1df76cd36767a595ada7a8
 
 # Set environment variables
 ENV OS opensuse-leap

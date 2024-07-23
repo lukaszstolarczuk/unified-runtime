@@ -9,7 +9,7 @@
 #
 
 # Pull base image ("22.04")
-FROM registry.hub.docker.com/library/ubuntu@sha256:e6173d4dc55e76b87c4af8db8821b1feae4146dd47341e4d431118c7dd060a74
+FROM registry.hub.docker.com/library/ubuntu@sha256:0eb0f877e1c869a300c442c41120e778db7161419244ee5cbc6fa5f134e74736
 
 # Set environment variables
 ENV OS ubuntu

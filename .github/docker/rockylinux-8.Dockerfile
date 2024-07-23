@@ -8,8 +8,8 @@
 #              environment for building the Unified Runtime project.
 #
 
-# Pull base image ("8")
-FROM registry.hub.docker.com/library/rockylinux@sha256:c464612ef7e3d54d658c3eaa4778b5cdc990ec7a4d9ab63b0f00c9994c6ce980
+# Pull base image ("8.9")
+FROM registry.hub.docker.com/library/rockylinux@sha256:9794037624aaa6212aeada1d28861ef5e0a935adaf93e4ef79837119f2a2d04c
 
 # Set environment variables
 ENV OS rockylinux

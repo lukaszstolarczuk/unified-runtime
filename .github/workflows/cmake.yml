@@ -16,13 +16,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-20.04', 'ubuntu-22.04', 'opensuse-leap-15', 'rockylinux-8', 'rockylinux-9']
+        os: ['ubuntu-20.04', 'ubuntu-22.04', 'ubuntu-24.04', 'opensuse-leap-15', 'rockylinux-8', 'rockylinux-9', 'fedora-40']
         build_type: [Debug, Release]
         compiler: [{c: gcc, cxx: g++}, {c: clang, cxx: clang++}]
     runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+    # Log in, to get higher pull rate limits
+    - name: Login to DockerHub
+      uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Build docker
       working-directory: ${{github.workspace}}

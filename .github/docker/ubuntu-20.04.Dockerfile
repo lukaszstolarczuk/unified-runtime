@@ -9,7 +9,7 @@
 #
 
 # Pull base image ("20.04")
-FROM registry.hub.docker.com/library/ubuntu@sha256:f2034e7195f61334e6caff6ecf2e965f92d11e888309065da85ff50c617732b8
+FROM registry.hub.docker.com/library/ubuntu@sha256:d86db849e59626d94f768c679aba441163c996caf7a3426f44924d0239ffe03f
 
 # Set environment variables
 ENV OS ubuntu
@@ -26,7 +26,6 @@ ARG SKIP_LIBBACKTRACE_BUILD
 # Base development packages
 ARG BASE_DEPS="\
 	build-essential \
-	cmake \
 	git"
 
 # Unified Runtime's dependencies
@@ -52,6 +51,11 @@ RUN apt-get update \
 	${MISC_DEPS} \
  && rm -rf /var/lib/apt/lists/* \
  && apt-get clean all
+
+# Install CMake from source (the version in apt it's too old)
+RUN wget https://cmake.org/files/v3.20/cmake-3.20.0-linux-x86_64.sh -O cmake.sh \
+ && chmod +x cmake.sh \
+ && ./cmake.sh --skip-license --prefix=/usr/local
 
 # Prepare a dir (accessible by anyone)
 RUN mkdir --mode 777 /opt/ur/
