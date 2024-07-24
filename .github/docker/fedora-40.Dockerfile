@@ -9,7 +9,7 @@
 #
 
 # Pull base image ("40")
-FROM registry.hub.docker.com/library/fedora@sha256:sha256:5ce8497aeea599bf6b54ab3979133923d82aaa4f6ca5ced1812611b197c79eb0
+FROM registry.hub.docker.com/library/fedora@sha256:5ce8497aeea599bf6b54ab3979133923d82aaa4f6ca5ced1812611b197c79eb0
 
 # Set environment variables
 ENV OS fedora
