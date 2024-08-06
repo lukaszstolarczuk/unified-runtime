@@ -29,7 +29,6 @@ env:
 jobs:
   adapter-build-hw:
     name: Build & Test HW
-    if: github.repository == 'oneapi-src/unified-runtime'  # run only on upstream; forks won't have the HW
     strategy:
       matrix:
         adapter: [
