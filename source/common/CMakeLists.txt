@@ -18,33 +18,40 @@ target_include_directories(ur_common PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
 )
 
-message(STATUS "Download Unified Memory Framework from github.com")
-if (NOT DEFINED UMF_REPO)
-    set(UMF_REPO "https://github.com/oneapi-src/unified-memory-framework.git")
+# Use this option to disable fetching UMF content and use UMF from the system.
+# Custom path of UMF can be set with CMAKE_PREFIX_PATH.
+set(UR_DISABLE_FETCH_UMF OFF CACHE BOOL "Disable fetching UMF content")
+
+if (UR_DISABLE_FETCH_UMF)
+    find_package(umf REQUIRED)
+else()
+    if (NOT DEFINED UMF_REPO)
+        set(UMF_REPO "https://github.com/oneapi-src/unified-memory-framework.git")
+    endif()
+
+    if (NOT DEFINED UMF_TAG)
+        # v0.9.x 23.08.2024: Merge pull request #696 ...
+        set(UMF_TAG 3c340e61c197f4f9e29abd947f90ce27c571433e)
+    endif()
+
+    message(STATUS "Will fetch Unified Memory Framework (${UMF_TAG}) from ${UMF_REPO}")
+
+    include(FetchContent)
+    FetchContent_Declare(unified-memory-framework
+        GIT_REPOSITORY    ${UMF_REPO}
+        GIT_TAG           ${UMF_TAG}
+    )
+
+    set(UMF_BUILD_TESTS OFF CACHE INTERNAL "Build UMF tests")
+    set(UMF_BUILD_EXAMPLES OFF CACHE INTERNAL "Build UMF examples")
+    # TODO: L0 provider not ready yet
+    set(UMF_BUILD_LEVEL_ZERO_PROVIDER OFF CACHE INTERNAL "Build Level Zero Provider")
+    set(UMF_BUILD_SHARED_LIBRARY ${UMF_BUILD_SHARED_LIBRARY} CACHE INTERNAL "Build UMF shared library")
+    set(UMF_BUILD_LIBUMF_POOL_DISJOINT ON CACHE INTERNAL "Build Disjoint Pool")
+
+    FetchContent_MakeAvailable(unified-memory-framework)
+    FetchContent_GetProperties(unified-memory-framework)
 endif()
-
-if (NOT DEFINED UMF_TAG)
-    # v0.9.x 23.08.2024: Merge pull request #696 ...
-    set(UMF_TAG 3c340e61c197f4f9e29abd947f90ce27c571433e)
-endif()
-
-message(STATUS "Will fetch Unified Memory Framework from ${UMF_REPO}")
-
-include(FetchContent)
-FetchContent_Declare(unified-memory-framework
-    GIT_REPOSITORY    ${UMF_REPO}
-    GIT_TAG           ${UMF_TAG}
-)
-
-set(UMF_BUILD_TESTS OFF CACHE INTERNAL "Build UMF tests")
-set(UMF_BUILD_EXAMPLES OFF CACHE INTERNAL "Build UMF examples")
-# TODO: L0 provider not ready yet
-set(UMF_BUILD_LEVEL_ZERO_PROVIDER OFF CACHE INTERNAL "Build Level Zero Provider")
-set(UMF_BUILD_SHARED_LIBRARY ${UMF_BUILD_SHARED_LIBRARY} CACHE INTERNAL "Build UMF shared library")
-set(UMF_BUILD_LIBUMF_POOL_DISJOINT ON CACHE INTERNAL "Build Disjoint Pool")
-
-FetchContent_MakeAvailable(unified-memory-framework)
-FetchContent_GetProperties(unified-memory-framework)
 
 if(UR_ENABLE_LATENCY_HISTOGRAM)
     set(HDR_HISTOGRAM_BUILD_STATIC CACHE INTERNAL ON "")
