@@ -64,7 +64,7 @@ jobs:
       run: |
         mkdir -p ${{github.workspace}}/umf-repo/build
         cd ${{github.workspace}}/umf-repo/build
-        cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release
+        cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DUMF_BUILD_TESTS=OFF
         make -j $(nproc)
         sudo make install
 
@@ -169,7 +169,7 @@ jobs:
       run: |
         mkdir -p ${{github.workspace}}/umf-repo/build
         cd ${{github.workspace}}/umf-repo/build
-        cmake .. -DCMAKE_PREFIX_PATH="${{env.VCPKG_PATH}}"
+        cmake .. -DCMAKE_PREFIX_PATH="${{env.VCPKG_PATH}}" -DUMF_BUILD_TESTS=OFF
         cmake --build . --config Release
         cmake --install . --config Release
 
@@ -236,7 +236,7 @@ jobs:
       run: |
         mkdir -p ${{github.workspace}}/umf-repo/build
         cd ${{github.workspace}}/umf-repo/build
-        cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release
+        cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DUMF_BUILD_TESTS=OFF
         make -j $(nproc)
         sudo make install
 
