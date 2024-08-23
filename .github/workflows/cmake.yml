@@ -2,10 +2,6 @@ name: Build and test
 
 on: [push, pull_request]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
   pull-requests: write
@@ -14,6 +10,7 @@ jobs:
   ubuntu-build:
     name: Build - Ubuntu
     strategy:
+      fail-fast: false
       matrix:
         os: ['ubuntu-20.04', 'ubuntu-22.04']
         build_type: [Debug, Release]
@@ -114,6 +111,7 @@ jobs:
   windows-build:
     name: Build - Windows
     strategy:
+      fail-fast: false
       matrix:
         os: ['windows-2019', 'windows-2022']
         adapter: [
@@ -208,8 +206,9 @@ jobs:
   macos-build:
     name: Build - MacOS
     strategy:
-        matrix:
-          os: ['macos-12', 'macos-13']
+      fail-fast: false
+      matrix:
+        os: ['macos-12', 'macos-13']
     runs-on: ${{matrix.os}}
 
     steps:
