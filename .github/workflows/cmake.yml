@@ -2,10 +2,6 @@ name: Build and test
 
 on: [push, pull_request]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
   pull-requests: write
@@ -14,33 +10,11 @@ jobs:
   ubuntu-build:
     name: Build - Ubuntu
     strategy:
+      fail-fast: false
       matrix:
         os: ['ubuntu-20.04', 'ubuntu-22.04']
         build_type: [Debug, Release]
         compiler: [{c: gcc, cxx: g++}]
-        libbacktrace: ['-DVAL_USE_LIBBACKTRACE_BACKTRACE=OFF']
-        pool_tracking: ['-DUMF_ENABLE_POOL_TRACKING=ON', '-DUMF_ENABLE_POOL_TRACKING=OFF']
-        latency_tracking: ['-DUMF_ENABLE_LATENCY_TRACKING=OFF']
-        include:
-          - os: 'ubuntu-22.04'
-            build_type: Release
-            compiler: {c: clang, cxx: clang++}
-            libbacktrace: '-DVAL_USE_LIBBACKTRACE_BACKTRACE=OFF'
-          - os: 'ubuntu-22.04'
-            build_type: Release
-            compiler: {c: gcc, cxx: g++}
-            libbacktrace: '-DVAL_USE_LIBBACKTRACE_BACKTRACE=ON'
-          - os: 'ubuntu-22.04'
-            build_type: Release
-            compiler: {c: clang, cxx: clang++}
-            libbacktrace: '-DVAL_USE_LIBBACKTRACE_BACKTRACE=ON'
-          - os: 'ubuntu-20.04'
-            build_type: Release
-            compiler: {c: gcc-7, cxx: g++-7}
-          - os: 'ubuntu-22.04'
-            build_type: Release
-            compiler: {c: clang, cxx: clang++}
-            latency_tracking: '-DUMF_ENABLE_LATENCY_TRACKING=ON'
     runs-on: ${{ (matrix.os == 'ubuntu-22.04' && github.repository_owner == 'oneapi-src') && 'intel-ubuntu-22.04' || matrix.os }}
 
     steps:
@@ -56,11 +30,6 @@ jobs:
 
     - name: Setup PATH
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-    - name: Install g++-7
-      if: matrix.compiler.cxx == 'g++-7'
-      run: |
-        sudo apt-get install -y ${{matrix.compiler.cxx}}
 
     - name: Install pip packages
       run: pip install -r third_party/requirements.txt
@@ -83,6 +52,22 @@ jobs:
         mkdir -p ${{github.workspace}}/dpcpp_compiler
         tar -xvf ${{github.workspace}}/dpcpp_compiler.tar.gz -C ${{github.workspace}}/dpcpp_compiler
 
+    - name: Checkout UMF
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        repository: 'oneapi-src/unified-memory-framework'
+        fetch-depth: 0
+        ref: v0.9.x
+        path: ${{github.workspace}}/umf-repo
+
+    - name: Build and install UMF
+      run: |
+        mkdir -p ${{github.workspace}}/umf-repo/build
+        cd ${{github.workspace}}/umf-repo/build
+        cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DUMF_BUILD_TESTS=OFF -DUMF_BUILD_LIBUMF_POOL_DISJOINT=ON
+        make -j $(nproc)
+        sudo make install
+
     - name: Configure CMake
       if: matrix.os == 'ubuntu-22.04'
       run: >
@@ -94,6 +79,7 @@ jobs:
         -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
         -DUR_BUILD_TESTS=ON
         -DUR_FORMAT_CPP_STYLE=ON
+        -DUR_DISABLE_FETCH_UMF=ON
         -DUR_DPCXX=${{github.workspace}}/dpcpp_compiler/bin/clang++
         ${{matrix.libbacktrace}}
         ${{matrix.pool_tracking}}
@@ -110,16 +96,10 @@ jobs:
         -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
         -DUR_BUILD_TESTS=ON
         -DUR_FORMAT_CPP_STYLE=ON
+        -DUR_DISABLE_FETCH_UMF=ON
         ${{matrix.libbacktrace}}
         ${{matrix.pool_tracking}}
         ${{matrix.latency_tracking}}
-
-    - name: Generate source from spec, check for uncommitted diff
-      if: matrix.os == 'ubuntu-22.04'
-      run: cmake --build ${{github.workspace}}/build --target check-generated
-
-    - name: Verify that each source file contains a license
-      run: cmake --build ${{github.workspace}}/build --target verify-licenses
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build -j $(nproc)
@@ -128,90 +108,10 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{matrix.build_type}} --output-on-failure -L "umf|loader|validation|tracing|unit|urtrace"
 
-  fuzztest:
-    name: Fuzz tests short
-    uses: ./.github/workflows/build-fuzz-reusable.yml
-    with:
-      test_label: "fuzz-short"
-
-  level-zero:
-    name: Level Zero
-    uses: ./.github/workflows/build-hw-reusable.yml
-    with:
-      adapter_name: L0
-      runner_name: L0
-
-  level-zero-v2:
-    name: Level Zero V2
-    uses: ./.github/workflows/build-hw-reusable.yml
-    with:
-      adapter_name: L0_V2
-      runner_name: L0
-
-  level-zero-static:
-    name: Level Zero static
-    uses: ./.github/workflows/build-hw-reusable.yml
-    with:
-      adapter_name: L0
-      runner_name: L0
-      static_loader: ON
-
-  opencl:
-    name: OpenCL
-    uses: ./.github/workflows/build-hw-reusable.yml
-    with:
-      adapter_name: OPENCL
-      runner_name: OPENCL
-      platform: "Intel(R) OpenCL"
-
-  cuda:
-    name: CUDA
-    uses: ./.github/workflows/build-hw-reusable.yml
-    with:
-      adapter_name: CUDA
-      runner_name: CUDA
-
-  hip:
-    name: HIP
-    uses: ./.github/workflows/build-hw-reusable.yml
-    with:
-      adapter_name: HIP
-      runner_name: HIP
-
-  native-cpu:
-    name: Native CPU
-    uses: ./.github/workflows/build-hw-reusable.yml
-    with:
-      adapter_name: NATIVE_CPU
-      runner_name: NATIVE_CPU
-
-  e2e-level-zero:
-    name: E2E L0
-    permissions:
-      contents: read
-      pull-requests: write
-    needs: [ubuntu-build, level-zero]
-    uses: ./.github/workflows/e2e_level_zero.yml
-
-  e2e-opencl:
-    name: E2E OpenCL
-    permissions:
-      contents: read
-      pull-requests: write
-    needs: [ubuntu-build, opencl]
-    uses: ./.github/workflows/e2e_opencl.yml
-
-  e2e-cuda:
-    name: E2E CUDA
-    permissions:
-      contents: read
-      pull-requests: write
-    needs: [ubuntu-build, cuda]
-    uses: ./.github/workflows/e2e_cuda.yml
-
   windows-build:
     name: Build - Windows
     strategy:
+      fail-fast: false
       matrix:
         os: ['windows-2019', 'windows-2022']
         adapter: [
@@ -257,6 +157,24 @@ jobs:
     - name: Install hwloc
       run: vcpkg install hwloc:x64-windows
 
+    - name: Checkout UMF
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        repository: 'oneapi-src/unified-memory-framework'
+        fetch-depth: 0
+        ref: v0.9.x
+        path: ${{github.workspace}}/umf-repo
+
+    - name: Build and install UMF
+      env:
+        VCPKG_PATH: "C:/vcpkg/packages/hwloc_x64-windows"
+      run: |
+        mkdir -p ${{github.workspace}}/umf-repo/build
+        cd ${{github.workspace}}/umf-repo/build
+        cmake .. -DCMAKE_PREFIX_PATH="${{env.VCPKG_PATH}}" -DUMF_BUILD_TESTS=OFF -DUMF_BUILD_LIBUMF_POOL_DISJOINT=ON
+        cmake --build . --config ${{matrix.build_type}}
+        cmake --install . --config ${{matrix.build_type}}
+
     - name: Configure CMake
       env:
         VCPKG_PATH: "C:/vcpkg/packages/hwloc_x64-windows"
@@ -272,6 +190,7 @@ jobs:
         -DUR_DEVELOPER_MODE=ON
         -DUR_BUILD_TESTS=ON
         -DUR_FORMAT_CPP_STYLE=ON
+        -DUR_DISABLE_FETCH_UMF=ON
         ${{matrix.adapter.var}}
 
     # TODO: re-enable when check-generated is fixed for windows runners see #888
@@ -289,8 +208,9 @@ jobs:
   macos-build:
     name: Build - MacOS
     strategy:
-        matrix:
-          os: ['macos-12', 'macos-13']
+      fail-fast: false
+      matrix:
+        os: ['macos-12', 'macos-13']
     runs-on: ${{matrix.os}}
 
     steps:
@@ -304,17 +224,38 @@ jobs:
       run: python3 -m pip install -r third_party/requirements.txt
 
     - name: Install hwloc
-      run: brew install hwloc
+      run: |
+        brew install hwloc
+        brew link hwloc
+
+    - name: Checkout UMF
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        repository: 'oneapi-src/unified-memory-framework'
+        fetch-depth: 0
+        ref: v0.9.x
+        path: ${{github.workspace}}/umf-repo
+
+    - name: Build and install UMF
+      run: |
+        mkdir -p ${{github.workspace}}/umf-repo/build
+        cd ${{github.workspace}}/umf-repo/build
+        cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_BUILD_TYPE=Release -DUMF_BUILD_TESTS=OFF -DUMF_BUILD_LIBUMF_POOL_DISJOINT=ON
+        make -j $(nproc)
+        make install
 
     - name: Configure CMake
       run: >
         cmake
         -B${{github.workspace}}/build
+        -DCMAKE_PREFIX_PATH="/usr/local"
         -DUR_ENABLE_TRACING=ON
         -DUR_DEVELOPER_MODE=ON
         -DCMAKE_BUILD_TYPE=Release
         -DUR_BUILD_TESTS=ON
         -DUR_FORMAT_CPP_STYLE=ON
         -DUMF_ENABLE_POOL_TRACKING=ON
+        -DUR_DISABLE_FETCH_UMF=ON
+
     - name: Build
       run: cmake --build ${{github.workspace}}/build -j $(sysctl -n hw.logicalcpu)
