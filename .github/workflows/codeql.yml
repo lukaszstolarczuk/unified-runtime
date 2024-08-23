@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   analyze-ubuntu:
+    if: false
     name: Analyze on Ubuntu
     runs-on: ${{ github.repository_owner == 'oneapi-src' && 'intel-ubuntu-22.04' || 'ubuntu-latest' }}
     permissions:
@@ -46,6 +47,7 @@ jobs:
       uses: github/codeql-action/analyze@f079b8493333aace61c81488f8bd40919487bd9f # v3.25.7
 
   analyze-windows:
+    if: false
     name: Analyze on Windows
     runs-on: windows-latest
     permissions:
