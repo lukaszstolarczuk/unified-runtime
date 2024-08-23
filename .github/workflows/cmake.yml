@@ -55,6 +55,22 @@ jobs:
         mkdir -p ${{github.workspace}}/dpcpp_compiler
         tar -xvf ${{github.workspace}}/dpcpp_compiler.tar.gz -C ${{github.workspace}}/dpcpp_compiler
 
+    - name: Checkout UMF
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        repository: 'oneapi-src/unified-memory-framework'
+        fetch-depth: 0
+        ref: v0.9.x
+        path: ${{github.workspace}}/umf-repo
+
+    - name: Build and install UMF
+      run: |
+        mkdir -p ${{github.workspace}}/umf-repo/build
+        cd ${{github.workspace}}/umf-repo/build
+        cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release
+        make -j $(nproc)
+        sudo make install
+
     - name: Configure CMake
       if: matrix.os == 'ubuntu-22.04'
       run: >
@@ -143,6 +159,22 @@ jobs:
     - name: Install hwloc
       run: vcpkg install hwloc:x64-windows
 
+    - name: Checkout UMF
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        repository: 'oneapi-src/unified-memory-framework'
+        fetch-depth: 0
+        ref: v0.9.x
+        path: ${{github.workspace}}/umf-repo
+
+    - name: Build and install UMF
+      run: |
+        mkdir -p ${{github.workspace}}/umf-repo/build
+        cd ${{github.workspace}}/umf-repo/build
+        cmake .. -DCMAKE_PREFIX_PATH="${{env.VCPKG_PATH}}"
+        cmake --build . --config Release
+        cmake --install . --config Release
+
     - name: Configure CMake
       env:
         VCPKG_PATH: "C:/vcpkg/packages/hwloc_x64-windows"
@@ -192,6 +224,22 @@ jobs:
 
     - name: Install hwloc
       run: brew install hwloc
+
+    - name: Checkout UMF
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        repository: 'oneapi-src/unified-memory-framework'
+        fetch-depth: 0
+        ref: v0.9.x
+        path: ${{github.workspace}}/umf-repo
+
+    - name: Build and install UMF
+      run: |
+        mkdir -p ${{github.workspace}}/umf-repo/build
+        cd ${{github.workspace}}/umf-repo/build
+        cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release
+        make -j $(nproc)
+        sudo make install
 
     - name: Configure CMake
       run: >
