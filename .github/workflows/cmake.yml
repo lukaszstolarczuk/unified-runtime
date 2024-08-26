@@ -64,7 +64,7 @@ jobs:
       run: |
         mkdir -p ${{github.workspace}}/umf-repo/build
         cd ${{github.workspace}}/umf-repo/build
-        cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DUMF_BUILD_TESTS=OFF -DUMF_BUILD_LIBUMF_POOL_DISJOINT=ON
+        cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DUMF_BUILD_TESTS=OFF -DUMF_BUILD_LIBUMF_POOL_DISJOINT=ON
         make -j $(nproc)
         sudo make install
 
@@ -166,12 +166,14 @@ jobs:
         path: ${{github.workspace}}/umf-repo
 
     - name: Build and install UMF
+      env:
+        VCPKG_PATH: "C:/vcpkg/packages/hwloc_x64-windows"
       run: |
         mkdir -p ${{github.workspace}}/umf-repo/build
         cd ${{github.workspace}}/umf-repo/build
         cmake .. -DCMAKE_PREFIX_PATH="${{env.VCPKG_PATH}}" -DUMF_BUILD_TESTS=OFF -DUMF_BUILD_LIBUMF_POOL_DISJOINT=ON
-        cmake --build . --config Release
-        cmake --install . --config Release
+        cmake --build . --config ${{matrix.build_type}}
+        cmake --install . --config ${{matrix.build_type}}
 
     - name: Configure CMake
       env:
@@ -222,7 +224,9 @@ jobs:
       run: python3 -m pip install -r third_party/requirements.txt
 
     - name: Install hwloc
-      run: brew install hwloc
+      run: |
+        brew install hwloc
+        brew link hwloc
 
     - name: Checkout UMF
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -236,14 +240,15 @@ jobs:
       run: |
         mkdir -p ${{github.workspace}}/umf-repo/build
         cd ${{github.workspace}}/umf-repo/build
-        cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DUMF_BUILD_TESTS=OFF -DUMF_BUILD_LIBUMF_POOL_DISJOINT=ON
+        cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_BUILD_TYPE=Release -DUMF_BUILD_TESTS=OFF -DUMF_BUILD_LIBUMF_POOL_DISJOINT=ON
         make -j $(nproc)
-        sudo make install
+        make install
 
     - name: Configure CMake
       run: >
         cmake
         -B${{github.workspace}}/build
+        -DCMAKE_PREFIX_PATH="/usr/local"
         -DUR_ENABLE_TRACING=ON
         -DUR_DEVELOPER_MODE=ON
         -DCMAKE_BUILD_TYPE=Release
