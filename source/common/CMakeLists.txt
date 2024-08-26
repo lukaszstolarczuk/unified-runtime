@@ -101,6 +101,6 @@ add_library(${PROJECT_NAME}::umf ALIAS ur_umf)
 
 target_link_libraries(ur_umf INTERFACE
     umf::umf
-    umf::headers
+    umf::umf_headers
     umf::disjoint_pool
 )
