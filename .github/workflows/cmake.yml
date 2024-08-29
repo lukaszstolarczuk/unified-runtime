@@ -174,6 +174,9 @@ jobs:
       run: |
         rm -rf lib/libumf.so*
 
+    - name: Print content of the workspace
+      run: ls -alR
+
     - name: Test ipc no LD
       working-directory: ${{github.workspace}}/build
       run: |
@@ -183,13 +186,13 @@ jobs:
     - name: Test ipc w/ LD
       working-directory: ${{github.workspace}}/build
       run: |
-        LD_LIBRARY_PATH=${{github.workspace}}/umf-install-dir ctest -C ${{matrix.build_type}} --output-on-failure -L "adapter-specific" || true
-        LD_LIBRARY_PATH=${{github.workspace}}/umf-install-dir ldd bin/test-adapter-level_zero_ipc || true
+        LD_LIBRARY_PATH="${{github.workspace}}/umf-install-dir/lib;/usr/local/lib/" ctest -C ${{matrix.build_type}} --output-on-failure -L "adapter-specific" || true
+        LD_LIBRARY_PATH="${{github.workspace}}/umf-install-dir/lib;/usr/local/lib/" ldd bin/test-adapter-level_zero_ipc || true
 
   windows-build:
     name: Build - Windows
-    if: false
     strategy:
+      fail-fast: false
       matrix:
         os: ['windows-2019', 'windows-2022']
         adapter: [
@@ -218,6 +221,13 @@ jobs:
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
+    - name: Checkout UMF
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        repository: 'oneapi-src/unified-memory-framework'
+        path: umf-repo
+        fetch-depth: 0
+
     - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: 3.9
@@ -235,9 +245,9 @@ jobs:
     - name: Install hwloc
       run: vcpkg install hwloc:x64-windows
 
-    - name: Configure CMake
+    - name: Configure CMake UR
       env:
-        VCPKG_PATH: "C:/vcpkg/packages/hwloc_x64-windows"
+        VCPKG_PATH: "C:/vcpkg/packages/tbb_x64-windows;C:/vcpkg/packages/jemalloc_x64-windows;C:/vcpkg/packages/hwloc_x64-windows"
       run: >
         cmake
         -B${{github.workspace}}/build
@@ -252,17 +262,86 @@ jobs:
         -DUR_FORMAT_CPP_STYLE=ON
         ${{matrix.adapter.var}}
 
-    # TODO: re-enable when check-generated is fixed for windows runners see #888
-    # - name: Generate source from spec, check for uncommitted diff
-    #   if: matrix.os == 'windows-2022'
-    #   run: cmake --build ${{github.workspace}}/build --target check-generated --config ${{matrix.build_type}}
-
     - name: Build all
       run: cmake --build ${{github.workspace}}/build --config ${{matrix.build_type}} -j $Env:NUMBER_OF_PROCESSORS
 
     - name: Test
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{matrix.build_type}} --output-on-failure -L "umf|loader|validation|tracing|unit|urtrace"
+
+    - name: Print content of the workspace
+      run: Get-ChildItem -Path .\ -Recurse -Force
+
+    - name: Test ipc
+      working-directory: ${{github.workspace}}/build
+      run: |
+        ctest -C ${{matrix.build_type}} --output-on-failure -L "adapter-specific" -ErrorAction SilentlyContinue
+        dumpin.exe /DEPENDENTS build\bin\${{matrix.build_type}}\test-adapter-level_zero_ipc.exe -ErrorAction SilentlyContinue
+
+    # UMF part
+    - name: Vcpkg integrate
+      working-directory: ${{github.workspace}}/umf-repo
+      run: vcpkg integrate install
+
+    - name: Install dependencies
+      working-directory: ${{github.workspace}}/umf-repo
+      run: vcpkg install --triplet x64-windows
+
+    - name: Configure UMF
+      env:
+        VCPKG_PATH: "C:/vcpkg/packages/tbb_x64-windows;C:/vcpkg/packages/jemalloc_x64-windows;C:/vcpkg/packages/hwloc_x64-windows"
+      working-directory: ${{github.workspace}}/umf-repo
+      run: >
+        cmake
+        -B build
+        -DCMAKE_PREFIX_PATH="${{env.VCPKG_PATH}}"
+        -DCMAKE_C_COMPILER=${{matrix.compiler.c}}
+        -DCMAKE_CXX_COMPILER=${{matrix.compiler.cxx}}
+        -DUMF_BUILD_SHARED_LIBRARY=ON
+        -DUMF_BUILD_LEVEL_ZERO_PROVIDER=ON
+        -DUMF_BUILD_TESTS=OFF
+        -DUMF_BUILD_EXAMPLES=OFF
+        -DUMF_PROXY_LIB_BASED_ON_POOL=JEMALLOC
+        -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/umf-install-dir
+
+    - name: Build UMF
+      working-directory: ${{github.workspace}}\umf-repo
+      run: cmake --build build --config ${{matrix.build_type}} -j $Env:NUMBER_OF_PROCESSORS
+
+    - name: Install UMF
+      working-directory: ${{github.workspace}}\umf-repo
+      run: cmake --install build --config ${{matrix.build_type}} --prefix "${{github.workspace}}\umf-install-dir"
+
+    - name: Print content of the workspace
+      run: Get-ChildItem -Path .\ -Recurse -Force
+
+    - name: Remove UMF redundant files
+      working-directory: ${{github.workspace}}\umf-install-dir
+      run: |
+        Remove-Item -Path "share\doc\umf\examples" -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path "include\umf\pools\pool_jemalloc.h" -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path "include\umf\pools\pool_proxy.h" -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path "include\umf\proxy_lib_new_delete.h" -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path "lib\cmake" -Recurse -Force -ErrorAction SilentlyContinue
+
+    - name: Remove UMF from UR
+      working-directory: ${{github.workspace}}/build
+      run: |
+        Remove-Item -Path "lib\libumf.so*" -Recurse -Force -ErrorAction SilentlyContinue
+
+    - name: Test ipc
+      working-directory: ${{github.workspace}}/build
+      run: |
+        ctest -C ${{matrix.build_type}} --output-on-failure -L "adapter-specific" -ErrorAction SilentlyContinue
+        dumpin.exe /DEPENDENTS build\bin\${{matrix.build_type}}\test-adapter-level_zero_ipc.exe -ErrorAction SilentlyContinue
+
+    - name: Test ipc
+      working-directory: ${{github.workspace}}/build
+      run: |
+        $env:PATH = "$env:PATH;${{github.workspace}}\umf-install-dir\bin;${{github.workspace}}\umf-install-dir\lib"
+        $env:LIB = "$env:LIB;${{github.workspace}}\umf-install-dir\bin;${{github.workspace}}\umf-install-dir\lib"
+        ctest -C ${{matrix.build_type}} --output-on-failure -L "adapter-specific" -ErrorAction SilentlyContinue
+        dumpin.exe /DEPENDENTS build\bin\${{matrix.build_type}}\test-adapter-level_zero_ipc.exe -ErrorAction SilentlyContinue
 
   macos-build:
     name: Build - MacOS
