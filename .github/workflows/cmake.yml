@@ -275,8 +275,7 @@ jobs:
     - name: Test ipc
       working-directory: ${{github.workspace}}/build
       run: |
-        ctest -C ${{matrix.build_type}} --output-on-failure -L "adapter-specific" -ErrorAction SilentlyContinue
-        dumpin.exe /DEPENDENTS build\bin\${{matrix.build_type}}\test-adapter-level_zero_ipc.exe -ErrorAction SilentlyContinue
+        ctest -C ${{matrix.build_type}} --output-on-failure -L "adapter-specific"
 
     # UMF part
     - name: Vcpkg integrate
@@ -332,16 +331,19 @@ jobs:
     - name: Test ipc
       working-directory: ${{github.workspace}}/build
       run: |
-        ctest -C ${{matrix.build_type}} --output-on-failure -L "adapter-specific" -ErrorAction SilentlyContinue
-        dumpin.exe /DEPENDENTS build\bin\${{matrix.build_type}}\test-adapter-level_zero_ipc.exe -ErrorAction SilentlyContinue
+        ctest -C ${{matrix.build_type}} --output-on-failure -L "adapter-specific"
 
     - name: Test ipc
       working-directory: ${{github.workspace}}/build
       run: |
         $env:PATH = "$env:PATH;${{github.workspace}}\umf-install-dir\bin;${{github.workspace}}\umf-install-dir\lib"
         $env:LIB = "$env:LIB;${{github.workspace}}\umf-install-dir\bin;${{github.workspace}}\umf-install-dir\lib"
-        ctest -C ${{matrix.build_type}} --output-on-failure -L "adapter-specific" -ErrorAction SilentlyContinue
-        dumpin.exe /DEPENDENTS build\bin\${{matrix.build_type}}\test-adapter-level_zero_ipc.exe -ErrorAction SilentlyContinue
+        ctest -C ${{matrix.build_type}} --output-on-failure -L "adapter-specific"
+
+    - name: check /DEPENDENTLOADFLAG in umf_proxy.dll
+      if: false
+      run: ${{github.workspace}}/.github/scripts/check_dll_flags.ps1 ${{env.BUILD_DIR}}/src/proxy_lib/${{matrix.build_type}}/umf_proxy.dll
+      shell: pwsh
 
   macos-build:
     name: Build - MacOS
