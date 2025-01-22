@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2023 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 # Part of the Unified-Runtime Project, under the Apache License v2.0 with LLVM Exceptions.
 # See LICENSE.TXT
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
@@ -32,10 +32,12 @@ if (NOT DEFINED UMF_REPO)
 endif()
 
 if (NOT DEFINED UMF_TAG)
-    # Tagger: Łukasz Stolarczuk <lukasz.stolarczuk@intel.com>
-    # Date:   Fri Jan 10 13:30:49 2025 +0100
-    # 0.10.1 release
-    set(UMF_TAG v0.10.1)
+    # commit 0e2dab29cf16e4153caf51e3bf0cfe54f3a4fbef
+    # Author: Rafał Rudnicki <rafal.rudnicki@intel.com>
+    # Date:   Thu Jan 23 11:55:55 2025 +0100
+    # Merge pull request #1054 from ldorau/Add_timeout_to_the_add_umf_ipc_example_function
+    # Add timeout to the add_umf_ipc_example function
+    set(UMF_TAG 0e2dab29cf16e4153caf51e3bf0cfe54f3a4fbef)
 endif()
 
 message(STATUS "Will fetch Unified Memory Framework from ${UMF_REPO}")
