@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2023 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 # Part of the Unified-Runtime Project, under the Apache License v2.0 with LLVM Exceptions.
 # See LICENSE.TXT
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
@@ -28,14 +28,16 @@ target_include_directories(ur_common PUBLIC
 
 message(STATUS "Download Unified Memory Framework from github.com")
 if (NOT DEFINED UMF_REPO)
-    set(UMF_REPO "https://github.com/oneapi-src/unified-memory-framework.git")
+    set(UMF_REPO "https://github.com/lukaszstolarczuk/unified-memory-framework.git")
 endif()
 
 if (NOT DEFINED UMF_TAG)
-    # Tagger: Łukasz Stolarczuk <lukasz.stolarczuk@intel.com>
-    # Date:   Fri Jan 10 13:30:49 2025 +0100
-    # 0.10.1 release
-    set(UMF_TAG v0.10.1)
+    # commit ada63d7e744066953923e04c8a0b0cd2f30757e8 (HEAD -> hwloc-revert-examples-win, origin/hwloc-revert-examples-win)
+    # Author: Łukasz Stolarczuk <lukasz.stolarczuk@intel.com>
+    # Date:   Fri Jan 24 12:58:01 2025 +0100
+    # Revert changes for Win static hwloc
+    # Ref. https://github.com/oneapi-src/unified-memory-framework/pull/1016
+    set(UMF_TAG ada63d7e744066953923e04c8a0b0cd2f30757e8)
 endif()
 
 message(STATUS "Will fetch Unified Memory Framework from ${UMF_REPO}")
