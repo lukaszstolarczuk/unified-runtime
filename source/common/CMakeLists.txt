@@ -28,16 +28,14 @@ target_include_directories(ur_common PUBLIC
 
 message(STATUS "Download Unified Memory Framework from github.com")
 if (NOT DEFINED UMF_REPO)
-    set(UMF_REPO "https://github.com/oneapi-src/unified-memory-framework.git")
+    set(UMF_REPO "https://github.com/lukaszstolarczuk/unified-memory-framework.git")
 endif()
 
 if (NOT DEFINED UMF_TAG)
-    # commit 0e2dab29cf16e4153caf51e3bf0cfe54f3a4fbef
-    # Author: Rafał Rudnicki <rafal.rudnicki@intel.com>
-    # Date:   Thu Jan 23 11:55:55 2025 +0100
-    # Merge pull request #1054 from ldorau/Add_timeout_to_the_add_umf_ipc_example_function
-    # Add timeout to the add_umf_ipc_example function
-    set(UMF_TAG 0e2dab29cf16e4153caf51e3bf0cfe54f3a4fbef)
+    # commit 917ac1db6685cd8e74f68d5c951d9388b82fbc6b (HEAD -> test-hwloc-win-static-revert, origin/test-hwloc-win-static-revert)
+    # Author: Łukasz Stolarczuk <lukasz.stolarczuk@intel.com>
+    # Date:   Fri Jan 24 12:58:01 2025 +0100
+    set(UMF_TAG 917ac1db6685cd8e74f68d5c951d9388b82fbc6b)
 endif()
 
 message(STATUS "Will fetch Unified Memory Framework from ${UMF_REPO}")
