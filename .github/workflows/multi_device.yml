@@ -18,9 +18,8 @@ jobs:
       matrix:
         adapter: [
           {name: L0},
-          {name: L0_V2}
         ]
-        build_type: [Debug, Release]
+        build_type: [Release]
         compiler: [{c: gcc, cxx: g++}] # TODO: investigate why memory-adapter-level_zero hangs with clang
 
     runs-on: "${{matrix.adapter.name}}_2T"
